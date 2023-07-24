@@ -115,12 +115,46 @@ if [ ! -e /etc/ldap/slapd.d/initialized ]; then
    LDAP_INIT_ROOT_USER_PW_HASHED=$(slappasswd -s "${LDAP_INIT_ROOT_USER_PW}")
 
    /etc/init.d/slapd start
-   sleep 3
+   # give slower systems a bit more time...
+   sleep 8
 
    if [ "${LDAP_INIT_RFC2307BIS_SCHEMA:-}" == "1" ]; then
       log INFO "Replacing NIS (RFC2307) schema with RFC2307bis schema..."
-      ldapdelete  -Y EXTERNAL cn={2}nis,cn=schema,cn=config
-      ldif add    -Y EXTERNAL /opt/ldifs/schema_rfc2307bis02.ldif
+      #ldapdelete  -Y EXTERNAL cn={2}nis,cn=schema,cn=config
+      #ldif add    -Y EXTERNAL /opt/ldifs/schema_rfc2307bis02.ldif
+      /etc/init.d/slapd stop
+      sleep 3
+      # backup 
+      log INFO "Backing up config"
+      slapcat -n0 > /tmp/orig_config.ldif
+      # optionally you could also backup users
+      # slapcat -n1 > /tmp/orig_users.ldif
+      # backup
+      log INFO "Backing up original-configuration"
+      mv /etc/ldap/slapd.d /etc/ldap/slapd.d-$(date -d "today" +"%Y%m%d%H%M").bak
+      mkdir /etc/ldap/slapd.d
+      chown openldap:openldap /etc/ldap/slapd.d
+      # use backup of config to create new without nis
+      # grab the line numbers before and after the nis schema
+      snip1=$(expr $(awk -v x="$start"  '$0~x {print NR}' /tmp/orig_config.ldif) - 1) ; export snip1
+      snip2=$(expr $(awk -v x="$end"  '$0~x {print NR}' /tmp/orig_config.ldif) - 1); export snip2
+      mkdir ~/newconfig
+      # Use the line numbers to assemble a new config without nis
+      sed -n 1,"$snip1"p /tmp/orig_config.ldif > /tmp/config.ldif
+      sed -e 1,"$snip2"d /tmp/orig_config.ldif >> /tmp/config.ldif
+      log INFO "Adding new config"
+      slapadd -F /etc/ldap/slapd.d -n 0 -l /tmp/config.ldif
+      # copy the ldif schema (seems like a good idea, but may not be necessary)
+      cp /opt/ldifs/schema_rfc2307bis02.ldif /etc/ldap/schema/rfc2307bis02.ldif
+      # fix perms and start daemon
+      chown openldap:openldap /etc/ldap/schema/rfc2307bis02.ldif
+      chown openldap:openldap -R /etc/ldap/slapd.d
+      log INFO "Starting up..."
+      /etc/init.d/slapd start
+      sleep 8
+      log INFO "Add schema via ldapadd... we shall see..."
+      ldapadd -Y EXTERNAL -f /etc/ldap/schema/schema_rfc2307bis02.ldif -D "cn=admin,cn=config" -W
+      log INFO "Our work here is done? Perhaps..."
    fi
 
    ldif add    -Y EXTERNAL /opt/ldifs/schema_sudo.ldif
