@@ -136,15 +136,14 @@ if [ ! -e /etc/ldap/slapd.d/initialized ]; then
       chown openldap:openldap /etc/ldap/slapd.d
       # use backup of config to create new without nis
       # grab the line numbers before and after the nis schema
-      snip1=$(expr $(awk -v x="$start"  '$0~x {print NR}' /tmp/orig_config.ldif) - 1) ; export snip1
-      snip2=$(expr $(awk -v x="$end"  '$0~x {print NR}' /tmp/orig_config.ldif) - 1); export snip2
-      mkdir ~/newconfig
+      snip1=$(expr $(awk -v x="$start"  '$0~x {print NR}' /tmp/orig_config.ldif) - 1); export snip1
+      snip2=$(expr $(awk -v x="$end"    '$0~x {print NR}' /tmp/orig_config.ldif) - 1); export snip2
       # Use the line numbers to assemble a new config without nis
       sed -n 1,"$snip1"p /tmp/orig_config.ldif > /tmp/config.ldif
       sed -e 1,"$snip2"d /tmp/orig_config.ldif >> /tmp/config.ldif
-      log INFO "Adding new config"
+      log INFO "Add new config"
       slapadd -F /etc/ldap/slapd.d -n 0 -l /tmp/config.ldif
-      # copy the ldif schema (seems like a good idea, but may not be necessary)
+      # copy the ldif schema (necessary?)
       cp /opt/ldifs/schema_rfc2307bis02.ldif /etc/ldap/schema/rfc2307bis02.ldif
       # fix perms and start daemon
       chown openldap:openldap /etc/ldap/schema/rfc2307bis02.ldif
