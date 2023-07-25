@@ -123,7 +123,9 @@ if [ ! -e /etc/ldap/slapd.d/initialized ]; then
       #ldapdelete  -Y EXTERNAL cn={2}nis,cn=schema,cn=config
       #ldif add    -Y EXTERNAL /opt/ldifs/schema_rfc2307bis02.ldif
       /etc/init.d/slapd stop
-      sleep 3
+      log INFO "Stopping slapd..."
+      sleep 8
+      cd ~
       # backup 
       log INFO "Backing up config"
       slapcat -n0 > /tmp/orig_config.ldif
