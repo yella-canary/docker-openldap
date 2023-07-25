@@ -132,10 +132,9 @@ if [ ! -e /etc/ldap/slapd.d/initialized ]; then
       # optionally you could also backup users
       # slapcat -n1 > /tmp/orig_users.ldif
       # backup
-      log INFO "Backing up original-configuration"
-      mv /etc/ldap/slapd.d /etc/ldap/slapd.d-$(date -d "today" +"%Y%m%d%H%M").bak
-      mkdir /etc/ldap/slapd.d
-      chown openldap:openldap /etc/ldap/slapd.d
+      log INFO "Backing up original slapd-configuration"
+      cp -R /etc/ldap/slapd.d /etc/ldap/slapd.d-$(date -d "today" +"%Y%m%d%H%M").bak
+      find -type f /etc/ldap/slapd.d/ -exec rm -f {}\;
       # use backup of config to create new without nis
       # grab the line numbers before and after the nis schema
       snip1=$(expr $(awk -v x="$start"  '$0~x {print NR}' /tmp/orig_config.ldif) - 1)
