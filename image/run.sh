@@ -126,6 +126,11 @@ if [ ! -e /etc/ldap/slapd.d/initialized ]; then
       cd ~
       # Plan: export config, backup, then delete config,
       # swap out nis for bis, import config. Profit.
+      #
+      # copy bis ldif into place
+      cp /opt/ldifs/schema_rfc2307bis02.ldif /etc/ldap/schema/schema_rfc2307bis02.ldif
+      chown openldap:openldap /etc/ldap/schema/schema_rfc2307bis02.ldif
+      #
       log INFO "Exporting initial slapd config..."
       slapcat -n0 > /tmp/orig_config.ldif
       log INFO "Backing up original slapd-configuration"
