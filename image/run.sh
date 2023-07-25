@@ -148,6 +148,8 @@ if [ ! -e /etc/ldap/slapd.d/initialized ]; then
       sed -n 1,"$LINETO"p /tmp/orig_config.ldif > /tmp/config.ldif
       # Append bis schema 
       cat /etc/ldap/schema/schema_rfc2307bis02.ldif >> /tmp/config.ldif
+      # make sure there is a newline
+      echo >> /tmp/config.ldif
       # All after nis
       sed -e 1,"$LINEFROM"d /tmp/orig_config.ldif >> /tmp/config.ldif
       # fix the loadorder for bis
