@@ -143,8 +143,8 @@ if [ ! -e /etc/ldap/slapd.d/initialized ]; then
       INETORGBEGINS="dn: cn={3}inetorgperson,cn=schema,cn=config"
       #LINETO=$(expr $(awk -v x="$NISBEGINS"  '$0~x {print NR}' /tmp/orig_config.ldif) - 1)
       #LINEFROM=$(expr $(awk -v x="$INETORGBEGINS"    '$0~x {print NR}' /tmp/orig_config.ldif) - 1)
-      LINETO=grep -n $NISBEGINS /tmp/orig_config.ldif | cut -f1 -d:
-      LINEFROM=grep -n $INETORGBEGINS /tmp/orig_config.ldif | cut -f1 -d:
+      LINETO=$(grep -n $NISBEGINS /tmp/orig_config.ldif | cut -f1 -d:)
+      LINEFROM=$(grep -n $INETORGBEGINS /tmp/orig_config.ldif | cut -f1 -d:)
       # Use the line numbers to assemble a new config without nis
       # All before nis..
       sed -n 1,"$LINETO"p /tmp/orig_config.ldif > /tmp/config.ldif
