@@ -139,12 +139,14 @@ if [ ! -e /etc/ldap/slapd.d/initialized ]; then
       find /etc/ldap/slapd.d/ -name "*" -type f  -delete
       # use backup of config to create new config where we will swap out nis for bis
       # grab the line numbers before and after the nis schema in exported config
-      NISBEGINS="dn: cn={2}nis,cn=schema,cn=config"
-      INETORGBEGINS="dn: cn={3}inetorgperson,cn=schema,cn=config"
+      #NISBEGINS="dn: cn={2}nis,cn=schema,cn=config"
+      #INETORGBEGINS="dn: cn={3}inetorgperson,cn=schema,cn=config"
       #LINETO=$(expr $(awk -v x="$NISBEGINS"  '$0~x {print NR}' /tmp/orig_config.ldif) - 1)
       #LINEFROM=$(expr $(awk -v x="$INETORGBEGINS"    '$0~x {print NR}' /tmp/orig_config.ldif) - 1)
-      LINETO=$(grep -n $NISBEGINS /tmp/orig_config.ldif | cut -f1 -d:)
-      LINEFROM=$(grep -n $INETORGBEGINS /tmp/orig_config.ldif | cut -f1 -d:)
+      #LINETO=$(grep -n $NISBEGINS /tmp/orig_config.ldif | cut -f1 -d:)
+      #LINEFROM=$(grep -n $INETORGBEGINS /tmp/orig_config.ldif | cut -f1 -d:)
+      LINETO=$(sed -n '/dn: cn={2}nis,cn=schema,cn=config/=' /tmp/orig_config.ldif)
+      LINEFROM=$(sed -n '/dn: cn={3}inetorgperson,cn=schema,cn=config/=' /tmp/orig_config.ldif)
       # Use the line numbers to assemble a new config without nis
       # All before nis..
       sed -n 1,"$LINETO"p /tmp/orig_config.ldif > /tmp/config.ldif
