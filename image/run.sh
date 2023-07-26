@@ -118,6 +118,9 @@ if [ ! -e /etc/ldap/slapd.d/initialized ]; then
    # give slower systems a bit more time...
    sleep 8
 
+   #################################################################
+   # Revised implementation of BIS_SCHEMA 
+   #################################################################
    if [ "${LDAP_INIT_RFC2307BIS_SCHEMA:-}" == "1" ]; then
       log INFO "Replacing NIS (RFC2307) schema with RFC2307bis schema..."
       log INFO "Stopping slapd..."
@@ -133,23 +136,16 @@ if [ ! -e /etc/ldap/slapd.d/initialized ]; then
       #
       log INFO "Exporting initial slapd config..."
       slapcat -n0 > /tmp/orig_config.ldif
+      # backup? no harm.
       log INFO "Backing up original slapd-configuration"
       cp -R /etc/ldap/slapd.d /etc/ldap/slapd.d-$(date -d "today" +"%Y%m%d%H%M").bak
       # slapd.d - delete it all, will replace with slapadd below
       find /etc/ldap/slapd.d/ -name "*" -type f  -delete
-      # use backup of config to create new config where we will swap out nis for bis
       # grab the line numbers before and after the nis schema in exported config
-      #NISBEGINS="dn: cn={2}nis,cn=schema,cn=config"
-      #INETORGBEGINS="dn: cn={3}inetorgperson,cn=schema,cn=config"
-      #LINETO=$(expr $(awk -v x="$NISBEGINS"  '$0~x {print NR}' /tmp/orig_config.ldif) - 1)
-      #LINEFROM=$(expr $(awk -v x="$INETORGBEGINS"    '$0~x {print NR}' /tmp/orig_config.ldif) - 1)
-      #LINETO=$(grep -n $NISBEGINS /tmp/orig_config.ldif | cut -f1 -d:)
-      #LINEFROM=$(grep -n $INETORGBEGINS /tmp/orig_config.ldif | cut -f1 -d:)
       LINETO=$(($(sed -n '/dn: cn={2}nis,cn=schema,cn=config/=' /tmp/orig_config.ldif)-1))
       LINEFROM=$(($(sed -n '/dn: cn={3}inetorgperson,cn=schema,cn=config/=' /tmp/orig_config.ldif)-1))
-      #LINEFROM=$(sed -n '/dn: cn={3}inetorgperson,cn=schema,cn=config/=' /tmp/orig_config.ldif)
       # Use the line numbers to assemble a new config without nis
-      # All before nis..
+      # Grab all before nis..
       sed -n 1,"$LINETO"p /tmp/orig_config.ldif > /tmp/config.ldif
       # Append bis schema 
       cat /etc/ldap/schema/schema_rfc2307bis02.ldif >> /tmp/config.ldif
@@ -163,7 +159,6 @@ if [ ! -e /etc/ldap/slapd.d/initialized ]; then
       log INFO "Ready to add new config..."
       slapadd -F /etc/ldap/slapd.d -n 0 -l /tmp/config.ldif
       # fix perms and start daemon
-      chown openldap:openldap /etc/ldap/schema/rfc2307bis02.ldif
       chown openldap:openldap -R /etc/ldap/slapd.d
       log INFO "Starting up..."
       /etc/init.d/slapd start
